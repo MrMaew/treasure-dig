@@ -1,9 +1,9 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Treasure Dig Demo</title>
+    <title>Treasure Dig v2</title>
     <style>
         body { font-family: sans-serif; text-align: center; background: #eef; }
         #grid { display: grid; grid-template-columns: repeat(20, 32px); grid-gap: 1px; margin: auto; width: max-content; }
@@ -18,18 +18,34 @@
         .rare { background-color: gold; }
         .epic { background-color: orange; }
         .grand { background-color: crimson; }
+        #message { margin-top: 20px; font-size: 1.1em; }
+        #restart-btn {
+            display: none;
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <h2>Treasure Dig (Offline Demo)</h2>
+    <h2>Treasure Dig (เวอร์ชันปรับปรุง)</h2>
     <div id="grid"></div>
     <p id="message"></p>
+    <button id="restart-btn" onclick="location.reload()">เริ่มเกมใหม่</button>
+
     <script>
         const grid = document.getElementById("grid");
         const message = document.getElementById("message");
+        const restartBtn = document.getElementById("restart-btn");
         const mapSize = 20;
+        const COOLDOWN = 10000; // 10 วินาที
+        let lastDigTime = 0;
 
-        // Simulate treasures (1 grand, 3 epic, 10 rare)
+        // Generate treasures
         const treasures = {};
         function randomPos() {
             return Math.floor(Math.random() * mapSize) + "_" + Math.floor(Math.random() * mapSize);
@@ -38,10 +54,9 @@
         for (let i = 0; i < 3; i++) treasures[randomPos()] = "EPIC";
         for (let i = 0; i < 10; i++) treasures[randomPos()] = "RARE";
 
-        // Track dug tiles
         const dugTiles = {};
+        let gameEnded = false;
 
-        // Create grid
         for (let y = 0; y < mapSize; y++) {
             for (let x = 0; x < mapSize; x++) {
                 const tile = document.createElement("div");
@@ -49,15 +64,38 @@
                 tile.dataset.x = x;
                 tile.dataset.y = y;
                 tile.onclick = () => {
+                    if (gameEnded) return;
+
+                    const now = Date.now();
+                    if (now - lastDigTime < COOLDOWN) {
+                        const waitSec = Math.ceil((COOLDOWN - (now - lastDigTime)) / 1000);
+                        message.textContent = `กรุณารออีก ${waitSec} วินาทีก่อนจะขุดได้อีกครั้ง`;
+                        return;
+                    }
+
                     const key = x + "_" + y;
                     if (dugTiles[key]) {
                         message.textContent = "คุณขุดตรงนี้ไปแล้ว!";
                         return;
                     }
+
+                    lastDigTime = now;
                     dugTiles[key] = true;
+
                     if (treasures[key]) {
                         tile.classList.add("dug", treasures[key].toLowerCase());
-                        message.textContent = `คุณพบสมบัติระดับ ${treasures[key]}!`;
+                        if (treasures[key] === "GRAND") {
+                            message.innerHTML = `
+                                <div style="font-size: 1.5em; color: crimson; margin-top: 20px;">
+                                    ยินดีด้วย! คุณค้นพบสมบัติระดับ <b>GRAND</b> แล้ว!!
+                                </div>
+                            `;
+                            restartBtn.style.display = "inline-block";
+                            gameEnded = true;
+                            return;
+                        } else {
+                            message.textContent = `คุณพบสมบัติระดับ ${treasures[key]}!`;
+                        }
                     } else {
                         tile.classList.add("dug");
                         message.textContent = "ไม่พบอะไรเลย...";
