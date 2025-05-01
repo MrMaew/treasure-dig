@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Treasure Dig Demo</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #eef; }
+        #grid { display: grid; grid-template-columns: repeat(20, 32px); grid-gap: 1px; margin: auto; width: max-content; }
+        .tile {
+            width: 32px;
+            height: 32px;
+            background-color: #88cc88;
+            border: 1px solid #555;
+            cursor: pointer;
+        }
+        .dug { background-color: #d2b48c; }
+        .rare { background-color: gold; }
+        .epic { background-color: orange; }
+        .grand { background-color: crimson; }
+    </style>
+</head>
+<body>
+    <h2>Treasure Dig (Offline Demo)</h2>
+    <div id="grid"></div>
+    <p id="message"></p>
+    <script>
+        const grid = document.getElementById("grid");
+        const message = document.getElementById("message");
+        const mapSize = 20;
+
+        // Simulate treasures (1 grand, 3 epic, 10 rare)
+        const treasures = {};
+        function randomPos() {
+            return Math.floor(Math.random() * mapSize) + "_" + Math.floor(Math.random() * mapSize);
+        }
+        treasures[randomPos()] = "GRAND";
+        for (let i = 0; i < 3; i++) treasures[randomPos()] = "EPIC";
+        for (let i = 0; i < 10; i++) treasures[randomPos()] = "RARE";
+
+        // Track dug tiles
+        const dugTiles = {};
+
+        // Create grid
+        for (let y = 0; y < mapSize; y++) {
+            for (let x = 0; x < mapSize; x++) {
+                const tile = document.createElement("div");
+                tile.classList.add("tile");
+                tile.dataset.x = x;
+                tile.dataset.y = y;
+                tile.onclick = () => {
+                    const key = x + "_" + y;
+                    if (dugTiles[key]) {
+                        message.textContent = "คุณขุดตรงนี้ไปแล้ว!";
+                        return;
+                    }
+                    dugTiles[key] = true;
+                    if (treasures[key]) {
+                        tile.classList.add("dug", treasures[key].toLowerCase());
+                        message.textContent = `คุณพบสมบัติระดับ ${treasures[key]}!`;
+                    } else {
+                        tile.classList.add("dug");
+                        message.textContent = "ไม่พบอะไรเลย...";
+                    }
+                };
+                grid.appendChild(tile);
+            }
+        }
+    </script>
+</body>
+</html>
